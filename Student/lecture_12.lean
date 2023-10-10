@@ -265,6 +265,11 @@ Do the same for biimplication while you're at it. This is already done
 for *implies*. Your job is to do the same for bi-implication, which
 Lean does not implement natively. 
 -/
+def bi_implication : Bool → Bool → Bool
+| true, true => true
+| false, false => true
+| true ,false => false
+| false, true => false
 
 /-!
 ### #5. Evaluate Propositions ind Various Worlds
@@ -279,13 +284,42 @@ to evaluate to true under both the all_true and all_false interpretations.
 #eval eval_expr e0 (λ _ => true)  -- expect true
 
 -- You do the rest
+#eval eval_expr e1 (λ _ => false)
+#eval eval_expr e1 (λ _ => true)
+#eval eval_expr e2 (λ _ => false)
+#eval eval_expr e2 (λ _ => true)
+#eval eval_expr e3 (λ _ => false)
+#eval eval_expr e3 (λ _ => true)
 
 /-!
 ### #6. Evaluate the Expressions Under Some Other Interpretation
 
-Other than these two, evaluate the proposgit config --global user.email "you@example.com"
+Other than these two, evaluate the propositions under your new
+interpretation, and confirm that they still evaluate to true.
+Your interpretation should assign various true and false values
+to *j, c, b,* and *a.* An interpretation has to give values to
+all (infinitely many) variables. You can do case analysis by
+pattern matching on a few specific variables (by index) then 
+use wildcard matching to handle all remaining cases.
 -/
 
 -- Answer here
+def custom_interp : Interp :=
+fun v => match v with 
+| var.mk 0 => true
+| var.mk 1 => false
+| var.mk 2 => true
+| var.mk 3 => false
+| _ => true
 
+#eval eval_expr e0 custom_interp
+#eval eval_expr e1 custom_interp
+#eval eval_expr e2 custom_interp
+#eval eval_expr e3 custom_interp
+#eval eval_expr B custom_interp
+#eval eval_expr J custom_interp
+#eval eval_expr C custom_interp
+#eval eval_expr A custom_interp
+
+    
 
