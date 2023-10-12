@@ -576,7 +576,7 @@ max_variable_index {v₀}
 #eval 
 max_variable_index ({v₀} ∧ {v₂})
 
-def num_vars : Expr → Nat := λ e => max_variable_index e + 1
+
 /-
 Generate list of 8 interpretations for three variables
 -/
