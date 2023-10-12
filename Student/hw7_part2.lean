@@ -90,7 +90,7 @@ propositional logic *iff/equivalence* (↔) operator.
 Note that Lean does not natively define the *iff*
 Boolean operator. 
 -/
-
+--Done.
 /-!
 Using our syntax for propositional logic, and the
 variable names *A, O, C,* and *B*, respectively for
@@ -105,6 +105,8 @@ Note: There's no need here to use our implementation
 of propositional logic. Just write the expression 
 here using the notation we've defined.
 -/
+
+-- (((O ∨ A) ∧ (B ∨ C)) ⇔ (A ∧ B) ∨ (A ∧ C) ∨ (O ∧ B) ∨ (O ∧ C))
 
 /-!
 ## #5 Propositional Logic Validity

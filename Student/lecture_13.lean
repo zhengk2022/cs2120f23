@@ -160,6 +160,8 @@ inductive binary_op : Type
 | and
 | or
 | imp
+| iff
+
 inductive Expr : Type
 | var_exp (v : var)
 | un_exp (op : unary_op) (e : Expr)
@@ -175,15 +177,22 @@ def eval_un_op : unary_op → (Bool → Bool)
 def implies : Bool → Bool → Bool
 | true, false => false
 | _, _ => true
+def equivalence : Bool → Bool → Bool
+| true, true => true
+| false, false => true
+| _ , _ => false
 def eval_bin_op : binary_op → (Bool → Bool → Bool)
 | binary_op.and => and
 | binary_op.or => or
 | binary_op.imp => implies
+| binary_op.iff => equivalence
+
 def Interp := var → Bool  
 def eval_expr : Expr → Interp → Bool 
 | (Expr.var_exp v),        i => i v
 | (Expr.un_exp op e),      i => (eval_un_op op) (eval_expr e i)
 | (Expr.bin_exp op e1 e2), i => (eval_bin_op op) (eval_expr e1 i) (eval_expr e2 i)
+
 
 
 /-!
@@ -463,6 +472,7 @@ def override : Interp → var → Bool → Interp
 def v₀ := var.mk 0
 def v₁ := var.mk 1
 def v₂ := var.mk 2
+def v₃ := var.mk 3
 
 -- Demonstration
 
@@ -553,76 +563,80 @@ program computes *2^v* from *v* and then passes *2^v* (the number
 of interpretations/rows to generate, along with *v*, the number 
 of variables, to a recursive function that does most of the work.
 -/
-def mk_interps (vars : Nat) : List Interp := 
-  mk_interps_helper (2^vars) vars
-where mk_interps_helper : (rows : Nat) → (vars : Nat) → List Interp
-  | 0, _         => []
-  | (n' + 1), v  => (mk_interp_vars_row v n')::mk_interps_helper n' v
+  def mk_interps (vars : Nat) : List Interp := 
+    mk_interps_helper (2^vars) vars
+  where mk_interps_helper : (rows : Nat) → (vars : Nat) → List Interp
+    | 0, _         => []
+    | (n' + 1), v  => (mk_interp_vars_row v n')::mk_interps_helper n' v
 
-/-
-Generate list of 8 interpretations for three variables
--/
-def interps3 := mk_interps 3
+  /-
+  Generate list of 8 interpretations for three variables
+  -/
+  def interps3 := mk_interps 3
 
-#reduce interps3.length   -- expect 8
+  #reduce interps3.length   -- expect 8
 
-/-!
-## From List Interp and Expr to List Output Bool Values
-Now how about a function that takes a list of interpretations and
-an expresssion and that produces a list of output values? 
--/
+  /-!
+  ## From List Interp and Expr to List Output Bool Values
+  Now how about a function that takes a list of interpretations and
+  an expresssion and that produces a list of output values? 
+  -/
 
-def eval_expr_interps : List Interp → Expr → List Bool
-| [], _ => []
---| h::t, e => (eval_expr e h)::eval_expr_interps t e
-| h::t, e => eval_expr_interps t e ++ [eval_expr e h]
+  def eval_expr_interps : List Interp → Expr → List Bool
+  | [], _ => []
+  | h::t, e => (eval_expr e h)::eval_expr_interps t e
+  
+  --| h::t, e => eval_expr_interps t e ++ [eval_expr e h]
 
-/-!
-The change in the preceding algorithm puts the list of output
-values in the right order with respect to our *enumeration* of
-interpretations.
--/
+  /-!
+  The change in the preceding algorithm puts the list of output
+  values in the right order with respect to our *enumeration* of
+  interpretations.
+  -/
 
--- Demonstration ]
-#reduce eval_expr_interps (mk_interps 2) ({v₀} ∧ {v₁})  -- [F,F,F,T]
-#reduce eval_expr_interps (mk_interps 2) ({v₀} ∨ {v₁})  -- [F,T,T,T]
+  -- Demonstration ]
+  #reduce eval_expr_interps (mk_interps 2) ({v₀} ∧ {v₁})  -- [F,F,F,T]
+  #reduce eval_expr_interps (mk_interps 2) ({v₀} ∨ {v₁})  -- [F,T,T,T]
+  
 
-/-!
+  /-!
 
-## From Expr to Number of Variables (Highest Variable Index)
+  ## From Expr to Number of Variables (Highest Variable Index)
 
-But our interface isn't yet ideal. We're providing an expression as 
-an argument, and from it we should be able to figure out how many 
-variables are involved. In other words, we shouldn't have to provide 
-a list of interpretations as a separate (and here the first) argument.
-The observation that leads to a solution is that we can analyze any
-expression to determine the highest index of any variable appearing
-in it. If we add 1 to that index, we'll have the number of variables
-in the expression and thus the number of columns in the truth table.
-We can then use mk_interps with that number as an argument to create
-the list of interpretations, corresponding to truth table rows, that
-ne need to pass to eval_expr_interps to get the list of outputs values.
--/
+  But our interface isn't yet ideal. We're providing an expression as 
+  an argument, and from it we should be able to figure out how many 
+  variables are involved. In other words, we shouldn't have to provide 
+  a list of interpretations as a separate (and here the first) argument.
+  The observation that leads to a solution is that we can analyze any
+  expression to determine the highest index of any variable appearing
+  in it. If we add 1 to that index, we'll have the number of variables
+  in the expression and thus the number of columns in the truth table.
+  We can then use mk_interps with that number as an argument to create
+  the list of interpretations, corresponding to truth table rows, that
+  ne need to pass to eval_expr_interps to get the list of outputs values.
+  -/
 
-def highest_variable_index : Expr → Nat
-| Expr.var_exp (var.mk i) => i
-| Expr.un_exp _ e => highest_variable_index e
-| Expr.bin_exp _ e1 e2 => max (highest_variable_index e1) (highest_variable_index e2)
+  def highest_variable_index : Expr → Nat
+  | Expr.var_exp (var.mk i) => i
+  | Expr.un_exp _ e => highest_variable_index e
+  | Expr.bin_exp _ e1 e2 => max (highest_variable_index e1) (highest_variable_index e2)
+  
 
-#eval highest_variable_index {v₀}
-#eval highest_variable_index ({v₀} ∧ {v₂})
+  #eval highest_variable_index {v₀}
+  #eval highest_variable_index ({v₀} ∧ {v₂})
 
-/-!
-## Major Result: Expr → List Bool, One For Each Interpretation
 
-Here's a really important function. Given an expression in propositional
-logic (using our syntax) it returns the list of outputs values under each
-of the possible interpretations of the variables (thus atomic expressions)
-in the given expression.
--/
+  /-!
+  ## Major Result: Expr → List Bool, One For Each Interpretation
 
-def truth_table_outputs : Expr → List Bool
-| e =>  eval_expr_interps (mk_interps (highest_variable_index e + 1)) e
+  Here's a really important function. Given an expression in propositional
+  logic (using our syntax) it returns the list of outputs values under each
+  of the possible interpretations of the variables (thus atomic expressions)
+  in the given expression.
+  -/
+
+  def truth_table_outputs : Expr → List Bool
+  | e =>  eval_expr_interps (mk_interps (highest_variable_index e + 1)) e
 
 /-!
 Demonstration/Tests: Confirm that actual results are as expected by
@@ -638,6 +652,9 @@ expressions).
 def X := {v₀}
 def Y := {v₁}
 def Z := {v₂}
+def D := {v₃}
+
+
 
 
 /-!
@@ -647,19 +664,6 @@ expression. Confirm that the results are expected by writing out the
 truth tables on paper, computing the expected outputs, and checking them
 against what we compute here.
 -/
-#reduce truth_table_outputs (X ∧ Y)
-#reduce truth_table_outputs (X ∨ Z)
-
--- Write the truth tables on paper then check here
-#reduce truth_table_outputs ((X ∧ Y) ∨ (X ∧ Z))
-#reduce truth_table_outputs ((X ∨ Y) ∧ (X ∨ Z))
-
--- Study expression and predict outputs before looking.
--- What names would you give to these particular propositions?
-#reduce truth_table_outputs ((¬(X ∧ Y) ⇒ (¬X ∨ ¬Y)))
-#reduce truth_table_outputs (((¬X ∨ ¬Y) ⇒ ¬(X ∧ Y)))
-#reduce truth_table_outputs ((¬(X ∨ Y ) ⇒ (¬X ∧ ¬ Y)))
-#reduce truth_table_outputs (((¬X ∧ ¬ Y) ⇒ ¬(X ∨ Y )))
 
 
 /-!
@@ -680,42 +684,35 @@ cases to demonstrate your results.
 
 -- Here
 
+
+
+
+
 -- Checks the outputs of the truth table outputs for any true value
-def SomeModelorNone := Interp ⊕ Unit
-def get_model_fun : Expr → SomeModelorNone
-| e => 
-  let num_vars := num_vars e
-  let interps := (mk_interps num_vars)
-where find_model : List_Interp → Expr → SomeModelorNone
-| [], _ => Sum.inr Unit.unit
-| h::t, e => if (eval_expr e h) then Sum.inl h else find_model t e
-
-def interps_to_bools: Interp
-
-def check_outputs : List Bool → Bool
+def check_sat : List Bool → Bool
 | [] => false
 | (true::_) => true
-| (_::t) => check_outputs t
-
-
+| (_::t) => check_sat t
+-- Checks if truth table is all true
+def check_val : List Bool → Bool
+| [] => true
+| (h::t) => h && (check_val t)
 
 
 def is_sat (e : Expr) : Bool :=
-  let outputs := truth_table_outputs e 
-  check_outputs outputs
+  let outputs := truth_table_outputs e
+  check_sat outputs
+  
 
 def is_unsat (e : Expr) : Bool :=
   not (is_sat e)
 
 
+
 def is_valid (e : Expr) : Bool :=
-  let outputs := truth_table_outputs e 
-  (check_outputs outputs)
+  let outputs := truth_table_outputs e
+  check_val outputs
 
-  
-  
-
-  
   
 
 
@@ -727,10 +724,17 @@ def is_valid (e : Expr) : Bool :=
 #eval is_valid (X ∨ ¬X)                 -- expect true
 #eval is_valid ((¬(X ∧ Y) ⇒ (¬X ∨ ¬Y))) -- expect true
 #eval is_valid (¬(X ∨ Y) ⇒ (¬X ∧ ¬Y))   -- expect true
-#eval is_valid ((X ∨ Y) ⇒ (X → ¬Y))     -- expect false
+#eval is_valid ((X ∨ Y) ⇒ (X ⇒ ¬Y))     -- expect false
 
 -- Test cases
-#eval is_valid (X → Y)
+#eval is_valid (X ⇒ Y)
+#eval is_valid (X ⇔ Y)
+#eval is_valid (X ⇔ X)
+def A := {v₀}
+def O := {v₁}
+def C := {v₂}
+def B := {v₃}
+#eval is_valid (((O ∨ A) ∧ (B ∨ C)) ⇔ (A ∧ B) ∨ (A ∧ C) ∨ (O ∧ B) ∨ (O ∧ C))
 
 
 

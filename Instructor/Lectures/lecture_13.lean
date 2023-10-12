@@ -566,25 +566,17 @@ def mk_interps (vars : Nat) : List Interp :=
 where mk_interps_helper : (rows : Nat) → (vars : Nat) → List Interp
   | 0, _         => []
   | (n' + 1), v  => (mk_interp_vars_row v n')::mk_interps_helper n' v
-
-
-/-!
-## (e : Expression) → Nat, The Number of Variables In e
--/
-
--- Analyze and understand how this function works!
-def max_variable_index : Expr → Nat
+  def max_variable_index : Expr → Nat
 | Expr.var_exp (var.mk i) => i
 | Expr.un_exp _ e => max_variable_index e
 | Expr.bin_exp _ e1 e2 => max (max_variable_index e1) (max_variable_index e2)
 
-#eval max_variable_index {v₀}
-#eval max_variable_index ({v₀} ∧ {v₂})
+#eval 
+max_variable_index {v₀}
+#eval 
+max_variable_index ({v₀} ∧ {v₂})
 
--- Given expression, return number of variables it assumes
 def num_vars : Expr → Nat := λ e => max_variable_index e + 1
-
-
 /-
 Generate list of 8 interpretations for three variables
 -/
