@@ -200,6 +200,7 @@ of the four resulting cases.
 HOMEWORK: Complete this proof.
 -/
 
+<<<<<<< HEAD
 example (A B : Prop) : ¬(A ∧ B) → ¬A ∨ ¬B :=
 λ nab =>
   let proof_of_aornota := em A
@@ -211,3 +212,16 @@ example (A B : Prop) : ¬(A ∧ B) → ¬A ∨ ¬B :=
   | Or.inl pa, Or.inr nb => Or.inr nb
   | Or.inr na, Or.inl pb => Or.inl na
   | Or.inr na, Or.inr nb => Or.inl na
+=======
+#check em
+
+example (A B : Prop) : ¬(A ∧ B) -> ¬A ∨ ¬B :=
+λ nab =>
+let proof_of_aornota := em A
+let proof_of_bornotb := em B
+match proof_of_aornota with
+| Or.inl a => match proof_of_bornotb with
+              | Or.inl b => False.elim (nab (And.intro a b))
+              | Or.inr nb => Or.inr nb
+| Or.inr na => Or.inl na
+>>>>>>> d0260dd504987affbc8daa512f075874f0ddda23
