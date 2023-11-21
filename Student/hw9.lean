@@ -210,4 +210,4 @@ example (A B : Prop) : ¬(A ∧ B) → ¬A ∨ ¬B :=
   | Or.inl pa, Or.inl pb => False.elim (nab (And.intro pa pb))
   | Or.inl pa, Or.inr nb => Or.inr nb
   | Or.inr na, Or.inl pb => Or.inl na
-  | Or.inr na, Or.inr nb => Or.inl na
+  | Or.inr na, Or.inr nb => gOr.inl na
